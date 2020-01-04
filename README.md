@@ -1,5 +1,7 @@
 # zhhyjs_baseline
 
+数字中国创新大赛-智慧海洋建设 baseline
+
 大赛链接：https://tianchi.aliyun.com/competition/entrance/231768/introduction
 
 为了大家的公平，此代码丢弃了一些特征，大家可自行挖掘
