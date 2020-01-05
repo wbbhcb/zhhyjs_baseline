@@ -27,7 +27,8 @@ torch.cuda.manual_seed(2020)
 
 def get_label(path):
     labels = []
-    for file in tqdm.tqdm(os.listdir(path)):
+    for i in tqdm.tqdm(range(7000)):
+        file = str(i) + '.csv'
         file_path = os.path.join(path, file)
         df = pd.read_csv(file_path)
         tmp_label = df['type'][0]
@@ -109,9 +110,10 @@ def val_epoch(model, criterion, val_dataloader, batch_size):
 
 def train(train_dataloader, val_dataloader, batch_size):
     model = resnet18()
+#    model = Net()
     model = model.to(device)
     # optimizer and loss
-    lr = 0.00005
+    lr = 0.0008
     optimizer = optim.Adam(model.parameters(), lr=lr)
 #    optimizer = optim.RMSprop(model.parameters(), lr=0.0001)
     # 模型保存文件夹
@@ -126,7 +128,7 @@ def train(train_dataloader, val_dataloader, batch_size):
                                            train_dataloader, epoch, lr, best_f1, batch_size)
         
         val_loss, val_f1, _ = val_epoch(model, criterion, val_dataloader, batch_size)
-
+        print('val_f1:%.3f' %val_f1)
         tmp_epoch = tmp_epoch + 1
         if best_f1 < val_f1:
             tmp_epoch = 0
@@ -178,7 +180,7 @@ if __name__=='__main__':
 
     for fold_, (trn_idx, val_idx) in enumerate(folds.split(np.zeros(trn_len))):
         print("fold n°{}".format(fold_ + 1))        
-
+        
         train_5 = Subset(all_dataset, trn_idx)
         valid_5 = Subset(all_dataset, val_idx)
 
@@ -188,8 +190,15 @@ if __name__=='__main__':
         
         _, _, output = val_epoch(model, criterion, val_loader, trn_batchsize)
         oof_lgb[val_idx] = output.cpu().detach().numpy()
+        
         prediction = prediction + test(test_loader, model, trn_batchsize)
         
+    df = pd.DataFrame(oof_lgb)
+    df.to_csv('trace_train.csv', index=None)
+    
+    df = pd.DataFrame(prediction/5)
+    df.to_csv('trace_test.csv', index=None)
+    
     oof_lgb_final = np.argmax(oof_lgb, axis=1)  
     print(f1_score(labels, oof_lgb_final, average='macro'))
     
@@ -208,5 +217,3 @@ if __name__=='__main__':
     df_pred['label'] = pred_label
     df_pred['label'] = df_pred['label'].map(label_dict)
     df_pred.to_csv('sub.csv', index=None, header=False)
-
-    
